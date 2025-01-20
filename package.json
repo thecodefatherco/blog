@@ -48,5 +48,9 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.3.3",
     "wrangler": "3.101.0"
-  }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.11.0"
 }
