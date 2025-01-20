@@ -1,0 +1,191 @@
+---
+image: "https://offerzen.ghost.io/content/images/2022/07/OfferZen_How-I-Used-Octane-to-Supercharge-my-Laravel-App_inner-article.png"
+draft: false
+category: Laravel
+tags:
+  - Laravel
+  - Laravel Octane
+  - PHP
+  - Swoole
+  - Roadrunner
+  - Performance
+publishedAt: '2022-08-06'
+includeInFrontpage: true
+authors:
+  - name: Alex Renoki
+    image: "https://avatars.githubusercontent.com/u/21983456?v=4"
+    contact:
+      github: rennokki
+title: How I Used Octane to Supercharge my Laravel App
+---
+
+I used Octane to solve this and decrease my banking app’s response time from 1 second to 46 milliseconds.
+
+Laravel at a small scale is really accessible, but when scaling Laravel applications they slow down significantly and frustrate users. I used Octane to solve this and decrease my banking app’s response time from 1 second to 46 milliseconds. Here’s how I made my app perform 22 times faster without changing any code.
+
+![How I Used Octane to Supercharge my Laravel App](https://offerzen.ghost.io/content/images/2022/07/OfferZen_How-I-Used-Octane-to-Supercharge-my-Laravel-App_inner-article.png)
+
+Working with Laravel for over five years, I’ve developed several applications, from simple blogs to CRUD applications and high-traffic ad networks. One of these was a simple banking application where speed was crucial; otherwise, transactions time out.
+
+As the app grew bigger each month, with hundreds of new users, requests and transactions per minute, it stopped scaling as efficiently as I expected. We temporarily solved the scaling issues  by adding a 4 vCPU 8 GB server.
+
+However, this wasn’t a sustainable solution because we couldn’t increase the server size without paying more.
+
+Octane provided a much better and cheaper solution that enabled me to keep the services providers and packages I’d used without compromising on speed.
+
+To understand my solution, you first have to understand why the app ended up becoming slower and slower.
+
+## More service providers = more booting time
+
+> Laravel was created to be accessible, but the downside of its accessibility is that it’s slow to load.
+>
+
+The [Laravel service container](https://laravel.com/docs/9.x/container) gave me a clean approach to injecting custom classes into functions anywhere in my code.
+
+This is how I used the service container in my banking app:
+
+```php
+// app/Services/VisaCardClient.php
+
+class VisaCardClient
+{
+    public function checkCvv($cardNumber, $cvv)
+    {
+        //
+    }
+}
+```
+
+```php
+// app/Providers/AppServiceProvider.php
+
+public function boot()
+{
+    $this->app->bind(VisaCardClient::class, function ($app) {
+        return new VisaCardClient(
+            $app->config['services.visa.api_key']
+        );
+    });
+}
+
+public function register()
+{
+    //
+}
+```
+
+```php
+// routes/web.php
+
+use Illuminate\\Support\\Facades\\Route;
+
+Route::post('/visa/check-cvv', function (VisaCardClient $client) {
+    $client->checkCvv(cardNumber: '4256...', cvv: 133);
+});
+```
+
+The Service Provider, a class that implements two classes, `boot()` and `register()`, explicitly tells the Service Container what to bind to and register before the request is processed.
+
+In this example I told the application to `bind` the VisaCardClient class to a new instance of that client. Wherever the class I bound is type-hinted, Laravel automatically replaces the method argument with the instantiated class defined by the bind callback and I don’t have to declare the same `new VisaCardClient` everywhere I need the instance, reducing code complexity.
+
+**Drawbacks to this approach:**
+
+The framework had to load all the Service Providers and resolve all the bindings by loading and running all `boot()` and `register()` methods before serving the request. For each request, each time a user visited the homepage or issued a POST request, the Service Providers’ `boot()` methods were run. This added a few tens of milliseconds to each request.
+
+**You may think that a few milliseconds worth of instantiating and loading the Service Providers aren’t worth optimising, but those milliseconds add up when more and more requests per second build-up.**
+
+## More packages = more booting time
+
+Another accessibility point that counts in Laravel’s favour is its well-known relationship with package makers. Anyone can write a few lines of code, publish them to Github, install a package and use that functionality out-of-the-box. For example, in my banking application, I used [Spatie’s Permissions package](https://spatie.be/docs/laravel-permission/v5/introduction) so I wouldn’t have to write a permissions system from scratch, reducing my time to ship a feature that lets teams manage their members’ permissions.
+
+I use a lot of packages from trusted sources, like [Spatie](https://spatie.be/). They have great support, the projects are well-maintained, and they have a lot of packages that solve many issues easily and quickly. Like the permissions package, there are loads of other packages I imported when building my app. This increased the time it took for the application to boot.
+
+The more third-party packages you install, the more time it takes for your Laravel application to boot, increasing each request's booting time.
+
+The “app booting” involves loading all service providers and running their `boot()` methods.
+
+![Octane tackles these issues by loading the Service Providers and packages only once, avoiding the need to instantiate them each time and saving a lot of computing on each request.](https://offerzen.ghost.io/content/images/2022/07/OfferZen_How-I-Used-Octane-to-Supercharge-my-Laravel-App_Graph.png)
+
+Octane tackles these issues by loading the Service Providers and packages only once, avoiding the need to instantiate them each time and saving a lot of computing on each request.
+
+## Octane serves requests from memory
+
+[Octane](https://laravel-news.com/laravel-octane) is a first-party Laravel package created to boost app performance.
+
+> Octane caches the Service Providers’ load process on the first request, and subsequent requests are served from memory.
+>
+
+Not only does Octane ensure the bootstrapping process is properly served from memory, but when paired with [Swoole](https://openswoole.com/docs) or [Roadrunner](https://roadrunner.dev/), it provides blazing web-serving speed!
+
+In my case, Octane was the perfect solution. It reduced the overall computing overhead of every request. Over 99% of requests were resolved below 200ms, while the average response time was around 50ms. This was 22 times faster than before.
+
+## Swoole has more features than Roadrunner
+
+To install Octane, you need a few prerequisites. One of these is either Swoole or Roadrunner. They are both highly-efficient web servers. While they differentiate a bit in terms of what they need to run, they do the same thing at the core. Swoole is a whole extension, making it harder to install on operating systems that do not have access to [PECL](https://pecl.php.net/), but it’s super rich in features. Roadrunner can run anywhere but lacks some features that Swoole has, such as support for tables for hot-cache.
+
+> I used Swoole as it has in-memory tables, allowing me to cache data directly within it. The custom Swoole tables for caching, or parallel processing, make the data available faster than using a usual in-memory store like Redis.
+>
+
+[Swoole has a dedicated page for installation,](https://github.com/swoole/swoole-docs/blob/master/get-started/installation.md) as different operating systems require different installation methods.
+
+In our case, to test locally on a Mac, we had to use `brew`:
+
+```bash
+brew install swoole
+```
+
+In your existing or clean Laravel project, Octane is super easy to install:
+
+```bash
+composer require laravel/octane
+```
+
+The base configuration files can be copied into the project with the following command:
+
+```bash
+php artisan octane:install
+```
+
+And… that’s it! If everything is alright, you can try running the Octane Serve command to start the server:
+
+```bash
+php artisan octane:serve
+```
+
+All you have to do is access your server through the provided link in the console. Each time you access the application, you can see the requests being registered and how much time they take:
+
+```bash
+GET / 200 OK ………………………… 134ms
+GET / 200 OK ………………………… 7ms
+GET / 200 OK ………………………… 4ms
+GET / 200 OK ………………………… 14ms
+```
+
+As you can see, the first request takes quite a while, but the following requests are faster, with the booting time reduced by at least 100ms. This is because the first request on a new process **always** boots the service providers, and the subsequent requests use the already-booted service providers to achieve blazing speeds.
+
+## Avoid memory leaks with Octane
+
+Beware of memory leaks when using Octane. As the process is never closed between requests and the service providers are cached, you can easily introduce memory leaks by not being aware of your code.
+
+Take this following (absurd) example, where our VisaCardClient service gets one of its arrays filled with a random string on each request:
+
+```php
+use App\\Services\\VisaCardClient;
+use Illuminate\\Http\\Request;
+use Illuminate\\Support\\Str;
+
+public function index(Request $request)
+{
+    VisaCardClient::$data[] = Str::random(10);
+
+    // ...
+}
+```
+
+You’d be tempted to say there's nothing wrong with it. However, as more and more requests pass, your `octane:serve` process will use more and more memory. While the service is cached, it is not rebuilt between requests, allowing the data to grow until the process gets recreated or it runs into an OOM error.
+
+There isn’t a magic formula; you just have to be aware of what your code does. I highly recommend running stress tests with various tools like [Grafana K6](https://k6.io/docs/) to ensure your process memory doesn’t increase.
+
+Laravel helps to code in a cleaner way, but this advantage can impact your production performance. Thanks to Octane, we can still take advantage of accessibility while having a performant production application.
+
+While Octane does most of the hard work, it doesn’t take the entire load, which is where [automated testing](https://laravel.com/docs/5.1/testing) comes in. But that’s a blog post for another time!

@@ -3,7 +3,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "cf-typegen": "wrangler types",
+    "postinstall": "pnpm run cf-typegen && prettier -l --write './**/*.{js,jsx,mjs,cjs,ts,tsx,json,vue}'",
+    "prettify": "prettier -l --write './**/*.{js,jsx,mjs,cjs,ts,tsx,json,vue}'",
+    "build:pages": "next-on-pages"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.0.0-alpha.13",
@@ -12,14 +16,37 @@
     "@types/react-dom": "18.2.19",
     "@vercel/analytics": "^1.1.3",
     "@vercel/speed-insights": "^1.0.9",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "geist": "1.2.2",
+    "highlight.js": "^11.11.1",
+    "lowlight": "^3.3.0",
+    "lucide-react": "^0.473.0",
     "next": "canary",
     "next-mdx-remote": "^4.4.1",
-    "postcss": "^8.4.35",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "sugar-high": "^0.6.0",
+    "react-markdown": "^9.0.3",
+    "sugar-high": "^0.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.7",
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "@opennextjs/cloudflare": "^0.3.8",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.1",
+    "eslint": "^9.17.0",
+    "eslint-import-resolver-typescript": "^3.7.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "postcss": "^8.4.49",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "tailwind-merge": "^2.6.0",
     "tailwindcss": "4.0.0-alpha.13",
-    "typescript": "5.3.3"
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "5.3.3",
+    "wrangler": "3.101.0"
   }
 }

@@ -1,0 +1,35 @@
+{
+  "arrowParens": "always",
+  "useTabs": false,
+  "semi": false,
+  "singleAttributePerLine": true,
+  "trailingComma": "all",
+  "jsxSingleQuote": false,
+  "tabWidth": 2,
+  "plugins": [
+    "prettier-plugin-tailwindcss",
+    "@trivago/prettier-plugin-sort-imports"
+  ],
+  "tailwindFunctions": ["clsx", "twMerge", "cn"],
+  "importOrder": [
+    "^react$",
+    "^@remix-run/(.*)$",
+    "^@/.server/(.*)$",
+    "^@/.client/(.*)$",
+    "^@nextui-org/(.*)$",
+    "^lucide-react$",
+    "^(~|@)/components/layouts/(.*)$",
+    "^(~|@)/components/(shadcn|ui)/(.*)$",
+    "^(~|@)/components/(.*)$",
+    "^(~|@)/utils/(.*)$",
+    "^(@assistant-ui)/(.*)$",
+    "^(@ai-sdk)/(.*)$",
+    "^(.+)/react$",
+    "<THIRD_PARTY_MODULES>",
+    "^(~|@)/assets/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "importOrderGroupNamespaceSpecifiers": true
+}

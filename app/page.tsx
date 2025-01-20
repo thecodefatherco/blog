@@ -1,17 +1,31 @@
-import { BlogPosts } from 'app/components/posts'
+import { useMemo } from "react"
+
+import { BlogPosts } from "app/components/posts"
 
 export default function Page() {
+  const currentTime = new Date().getHours()
+
+  const greeting = useMemo(() => {
+    if (currentTime < 11) {
+      return "Good morning"
+    } else if (currentTime < 18) {
+      return "Good afternoon"
+    } else {
+      return "Good evening"
+    }
+  }, [currentTime])
+
   return (
     <section>
       <h1 className="mb-8 text-2xl font-semibold tracking-tighter">
-        My Portfolio
+        {`${greeting}!`}
       </h1>
       <p className="mb-4">
-        {`I'm a Vim enthusiast and tab advocate, finding unmatched efficiency in
-        Vim's keystroke commands and tabs' flexibility for personal viewing
-        preferences. This extends to my support for static typing, where its
-        early error detection ensures cleaner code, and my preference for dark
-        mode, which eases long coding sessions by reducing eye strain.`}
+        {`Fast, out-of-the-box thinker with an amazing, efficient, hyper-focused mind, that reads people in a second, that stays calm during a crisis while everyone is in panic mode, bringing unique and creative solutions that your competitors won't think about, giving you a competitive advantage in any project.`}
+      </p>
+      <p className="mb-4">
+        {`
+Empathetic and resilient — a high-energy person that is super fun to be around, with an amazing judge of character, packed with a lot of resilience, intuition and top-notch pattern recognition skills.`}
       </p>
       <div className="my-8">
         <BlogPosts />
